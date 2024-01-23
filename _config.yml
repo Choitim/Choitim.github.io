@@ -14,7 +14,7 @@ timezone: Asia/Seoul
 # jekyll-seo-tag settings › https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
 # ↓ --------------------------
 
-title: Devchoi # the main title
+title: 데브초이 # the main title
 
 tagline: 공부한 내용을 깔끔하게 정리해서 기록하려고 합니다. # it will display as the sub-title
 
