@@ -30,11 +30,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v4
-        with:
-          node-version: "20"
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
