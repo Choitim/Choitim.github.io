@@ -31,9 +31,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4  # v3 -> v4로 업데이트
         with:
-          node-version: "20"
+          node-version: '20'
 
       - name: Setup Pages
         id: pages
@@ -42,7 +42,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.2
+          ruby-version: '3.2'
           bundler-cache: true
 
       - name: Build site
@@ -57,9 +57,9 @@ jobs:
             --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
 
       - name: Upload site artifact
-        uses: actions/upload-artifact@v4  # actions/upload-pages-artifact 대신 직접 사용
+        uses: actions/upload-artifact@v4  # actions/upload-pages-artifact@v2 대신 v4 사용
         with:
-          name: jekyll-site
+          name: github-pages  # actions/deploy-pages가 기대하는 이름
           path: "_site${{ steps.pages.outputs.base_path }}"
           if-no-files-found: error
 
@@ -71,11 +71,11 @@ jobs:
     needs: build
     steps:
       - name: Download site artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4  # 아티팩트 다운로드 추가
         with:
-          name: jekyll-site
+          name: github-pages
           path: "_site${{ steps.pages.outputs.base_path }}"
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4  # v2 -> v4로 업데이트
