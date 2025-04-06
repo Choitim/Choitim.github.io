@@ -31,7 +31,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4  # v3 -> v4로 업데이트
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -56,10 +56,19 @@ jobs:
             --disable-external=true \
             --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
 
+      - name: Remove symlinks and hard links
+        run: |
+          # 심볼릭 링크 제거
+          find "_site${{ steps.pages.outputs.base_path }}" -type l -exec rm -v {} +
+          # 하드 링크 확인 및 복사로 대체 (하드 링크를 일반 파일로 변환)
+          find "_site${{ steps.pages.outputs.base_path }}" -type f -links +1 -exec sh -c 'for file; do cp -v "$file" "${file}.tmp" && mv -v "${file}.tmp" "$file"; done' _ {} +
+          # 디렉토리 크기 확인
+          du -sh "_site${{ steps.pages.outputs.base_path }}"
+
       - name: Upload site artifact
-        uses: actions/upload-artifact@v4  # actions/upload-pages-artifact@v2 대신 v4 사용
+        uses: actions/upload-artifact@v4
         with:
-          name: github-pages  # actions/deploy-pages가 기대하는 이름
+          name: github-pages
           path: "_site${{ steps.pages.outputs.base_path }}"
           if-no-files-found: error
 
@@ -71,11 +80,11 @@ jobs:
     needs: build
     steps:
       - name: Download site artifact
-        uses: actions/download-artifact@v4  # 아티팩트 다운로드 추가
+        uses: actions/download-artifact@v4
         with:
           name: github-pages
           path: "_site${{ steps.pages.outputs.base_path }}"
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4  # v2 -> v4로 업데이트
+        uses: actions/deploy-pages@v4
