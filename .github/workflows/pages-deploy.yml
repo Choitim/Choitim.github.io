@@ -24,44 +24,58 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
+      - name: Verify Repository Contents
+        run: |
+          echo "Listing repository root:"
+          ls -la
+          if [ ! -f Gemfile ]; then
+            echo "Error: Gemfile not found!"
+            exit 1
+          fi
+          if [ ! -f _config.yml ]; then
+            echo "Warning: _config.yml not found, may cause Jekyll errors!"
+          fi
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.2
           bundler-cache: true
-      - name: Build site
-        run: bundle exec jekyll b -d "_site${{ steps.pages.outputs.base_path }}"
+      - name: Install Dependencies
+        run: bundle install
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+      - name: Build Site
+        run: bundle exec jekyll build -d "_site${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
-      - name: Test site
+      - name: Test Site
         run: |
           bundle exec htmlproofer _site \
             --disable-external=true \
             --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
-      - name: Inspect and clean site folder
+      - name: Inspect and Clean Site Folder
         run: |
+          echo "Checking _site existence:"
+          ls -ld _site || echo "_site not found!"
           echo "Listing symbolic links:"
           find _site -type l || echo "No symbolic links found"
-          echo "Listing hard links (files with multiple links):"
+          echo "Listing hard links:"
           find _site -type f -links +1 || echo "No hard links found"
-          echo "Checking folder size:"
+          echo "Initial size:"
           du -sh _site
-          echo "Removing symbolic links:"
-          find _site -type l -delete
-          echo "Removing large files (>50MB):"
-          find _site -type f -size +50M -delete
-          echo "Final folder size:"
+          echo "Copying _site to break links:"
+          mkdir -p clean_site
+          cp -r _site/* clean_site/ || echo "Copy failed, _site may be empty"
+          rm -rf _site
+          mv clean_site _site
+          echo "Removing large files (>10MB):"
+          find _site -type f -size +10M -delete
+          echo "Final size:"
           du -sh _site
           echo "Listing remaining files:"
           ls -lR _site
-      - name: Upload site artifact
+      - name: Upload Site Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: "_site${{ steps.pages.outputs.base_path }}"
