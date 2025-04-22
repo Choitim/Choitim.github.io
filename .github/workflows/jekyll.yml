@@ -1,0 +1,90 @@
+name: "Jekyll Build and Deploy"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - .gitignore
+      - README.md
+      - LICENSE
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Build site
+        run: bundle exec jekyll b -d "_site${{ steps.pages.outputs.base_path }}"
+        env:
+          JEKYLL_ENV: "production"
+
+      - name: Test site
+        run: |
+          bundle exec htmlproofer _site \
+            --disable-external=true \
+            --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
+
+      - name: Remove symlinks and hard links
+        run: |
+          # 심볼릭 링크 제거
+          find "_site${{ steps.pages.outputs.base_path }}" -type l -exec rm -v {} +
+          # 하드 링크 확인 및 복사로 대체 (하드 링크를 일반 파일로 변환)
+          find "_site${{ steps.pages.outputs.base_path }}" -type f -links +1 -exec sh -c 'for file; do cp -v "$file" "${file}.tmp" && mv -v "${file}.tmp" "$file"; done' _ {} +
+          # 디렉토리 크기 확인
+          du -sh "_site${{ steps.pages.outputs.base_path }}"
+
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages
+          path: "_site${{ steps.pages.outputs.base_path }}"
+          if-no-files-found: error
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download site artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: "_site${{ steps.pages.outputs.base_path }}"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
