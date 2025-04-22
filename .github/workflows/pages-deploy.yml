@@ -54,6 +54,13 @@ jobs:
       - name: Install Dependencies
         run: bundle install --path vendor/bundle
 
+      - name: Debug htmlproofer path and version
+        run: |
+          echo "📌 htmlproofer binary:"
+          which htmlproofer || echo "htmlproofer not found"
+          echo "📌 htmlproofer version:"
+          bundle exec htmlproofer --version || true
+
       - name: Build site
         run: bundle exec jekyll build -d "_site${{ steps.pages.outputs.base_path }}"
         env:
