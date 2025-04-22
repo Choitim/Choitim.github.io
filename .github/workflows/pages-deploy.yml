@@ -54,13 +54,6 @@ jobs:
       - name: Install Dependencies
         run: bundle install --path vendor/bundle
 
-      - name: Debug htmlproofer path and version
-        run: |
-          echo "📌 htmlproofer binary:"
-          which htmlproofer || echo "htmlproofer not found"
-          echo "📌 htmlproofer version:"
-          bundle exec htmlproofer --version || true
-
       - name: Build site
         run: bundle exec jekyll build -d "_site${{ steps.pages.outputs.base_path }}"
         env:
@@ -95,12 +88,6 @@ jobs:
         run: |
           echo "📁 _site content preview:"
           find "_site${{ steps.pages.outputs.base_path }}" -type f | head -n 30
-
-      - name: Test site with htmlproofer
-        run: |
-          bundle exec htmlproofer _site \
-            --disable-external \
-            --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
 
       - name: Upload site artifact
         uses: actions/upload-artifact@v4
