@@ -56,18 +56,24 @@ jobs:
       - name: Clean _site folder
         run: |
           TARGET="_site${{ steps.pages.outputs.base_path }}"
-          echo "🧼 Checking folder: $TARGET"
+          echo "🧼 Cleaning folder: $TARGET"
 
-          echo "🧹 Removing symbolic links..."
+          echo "📎 Checking for symlinks..."
+          find "$TARGET" -type l
+
+          echo "🧹 Removing all symbolic links..."
           find "$TARGET" -type l -exec rm -v {} +
 
-          echo "🔗 Replacing hard links with fresh copies..."
-          find "$TARGET" -type f -links +1 -exec sh -c 'for file; do cp -f "$file" "$file.tmp" && mv -f "$file.tmp" "$file"; done' _ {} +
+          echo "🔍 Checking for hard links..."
+          find "$TARGET" -type f -links +1
+
+          echo "🔁 Replacing hard links with unique copies..."
+          find "$TARGET" -type f -links +1 -exec sh -c 'for file; do cp --remove-destination -f "$file" "$file.tmp" && mv -f "$file.tmp" "$file"; done' _ {} +
 
           echo "🪶 Deleting files larger than 10MB..."
           find "$TARGET" -type f -size +10M -delete
 
-          echo "✅ Cleaned files summary:"
+          echo "📦 Final size of _site:"
           du -sh "$TARGET"
 
       - name: Test site with htmlproofer
