@@ -43,16 +43,19 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-          bundler-cache: true
+          bundler-cache: false
 
-      - name: Clear cached bundle if needed
-        run: rm -rf vendor/bundle
+      - name: Remove old bundle and lock files
+        run: |
+          rm -rf vendor/bundle
+          rm -rf .bundle
+          rm -f Gemfile.lock
 
       - name: Install Dependencies
-        run: bundle install
+        run: bundle install --path vendor/bundle
 
       - name: Build site
-        run: bundle exec jekyll b -d "_site${{ steps.pages.outputs.base_path }}"
+        run: bundle exec jekyll build -d "_site${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: "production"
 
@@ -60,14 +63,8 @@ jobs:
         run: |
           TARGET="_site${{ steps.pages.outputs.base_path }}"
           echo "🧼 Cleaning folder: $TARGET"
-
-          echo "🧹 Removing all symbolic links..."
           find "$TARGET" -type l -exec rm -v {} +
-
-          echo "🔁 Replacing hard links with unique copies..."
           find "$TARGET" -type f -links +1 -exec sh -c 'for file; do cp --remove-destination -f "$file" "$file.tmp" && mv -f "$file.tmp" "$file"; done' _ {} +
-
-          echo "🪶 Deleting files larger than 10MB..."
           find "$TARGET" -type f -size +10M -delete
 
       - name: Add .nojekyll file
