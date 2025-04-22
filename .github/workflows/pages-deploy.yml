@@ -53,17 +53,28 @@ jobs:
         env:
           JEKYLL_ENV: "production"
 
+      - name: Clean _site folder
+        run: |
+          TARGET="_site${{ steps.pages.outputs.base_path }}"
+          echo "Checking folder: $TARGET"
+
+          echo "🧹 Removing symbolic links..."
+          find "$TARGET" -type l -exec rm -v {} +
+
+          echo "🔗 Replacing hard links with new files..."
+          find "$TARGET" -type f -links +1 -exec sh -c 'for file; do cp -f "$file" "$file.tmp" && mv -f "$file.tmp" "$file"; done' _ {} +
+
+          echo "🪶 Deleting files larger than 10MB..."
+          find "$TARGET" -type f -size +10M -delete
+
+          echo "✅ Cleaned files summary:"
+          du -sh "$TARGET"
+
       - name: Test site with htmlproofer
         run: |
           bundle exec htmlproofer _site \
             --disable-external \
             --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
-
-      - name: Remove symlinks and hard links
-        run: |
-          find "_site${{ steps.pages.outputs.base_path }}" -type l -exec rm -v {} +
-          find "_site${{ steps.pages.outputs.base_path }}" -type f -links +1 -exec sh -c 'for file; do cp -v "$file" "${file}.tmp" && mv -v "${file}.tmp" "$file"; done' _ {} +
-          du -sh "_site${{ steps.pages.outputs.base_path }}"
 
       - name: Upload site artifact
         uses: actions/upload-artifact@v4
