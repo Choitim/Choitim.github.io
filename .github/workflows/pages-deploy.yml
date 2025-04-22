@@ -56,12 +56,12 @@ jobs:
       - name: Clean _site folder
         run: |
           TARGET="_site${{ steps.pages.outputs.base_path }}"
-          echo "Checking folder: $TARGET"
+          echo "🧼 Checking folder: $TARGET"
 
           echo "🧹 Removing symbolic links..."
           find "$TARGET" -type l -exec rm -v {} +
 
-          echo "🔗 Replacing hard links with new files..."
+          echo "🔗 Replacing hard links with fresh copies..."
           find "$TARGET" -type f -links +1 -exec sh -c 'for file; do cp -f "$file" "$file.tmp" && mv -f "$file.tmp" "$file"; done' _ {} +
 
           echo "🪶 Deleting files larger than 10MB..."
