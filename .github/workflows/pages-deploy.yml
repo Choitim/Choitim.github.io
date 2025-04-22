@@ -59,17 +59,17 @@ jobs:
         env:
           JEKYLL_ENV: "production"
 
-      - name: Clean _site folder (no symlinks, hardlinks)
+      - name: Clean _site folder (remove all links via tar trick)
         run: |
           TARGET="_site${{ steps.pages.outputs.base_path }}"
+          echo "📦 Repacking _site to remove all symlinks & hardlinks"
 
-          echo "🔍 Clean & Copying to new folder to remove links..."
           mkdir clean_site
-          cp -a "$TARGET/." clean_site/  # copy everything but resolve links
+          tar -cf - -C "$TARGET" . | tar -xf - -C clean_site
           rm -rf "$TARGET"
           mv clean_site "$TARGET"
 
-          echo "🪶 Removing files > 10MB..."
+          echo "🪶 Removing files larger than 10MB..."
           find "$TARGET" -type f -size +10M -delete
 
           echo "📦 Final _site size:"
