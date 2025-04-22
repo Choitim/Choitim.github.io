@@ -59,18 +59,26 @@ jobs:
         env:
           JEKYLL_ENV: "production"
 
-      - name: Clean _site folder
+      - name: Clean _site folder (no symlinks, hardlinks)
         run: |
           TARGET="_site${{ steps.pages.outputs.base_path }}"
-          echo "🧼 Cleaning folder: $TARGET"
-          find "$TARGET" -type l -exec rm -v {} +
-          find "$TARGET" -type f -links +1 -exec sh -c 'for file; do cp --remove-destination -f "$file" "$file.tmp" && mv -f "$file.tmp" "$file"; done' _ {} +
+
+          echo "🔍 Clean & Copying to new folder to remove links..."
+          mkdir clean_site
+          cp -a "$TARGET/." clean_site/  # copy everything but resolve links
+          rm -rf "$TARGET"
+          mv clean_site "$TARGET"
+
+          echo "🪶 Removing files > 10MB..."
           find "$TARGET" -type f -size +10M -delete
+
+          echo "📦 Final _site size:"
+          du -sh "$TARGET"
 
       - name: Add .nojekyll file
         run: touch "_site${{ steps.pages.outputs.base_path }}/.nojekyll"
 
-      - name: Remove potentially problematic folders
+      - name: Remove problematic folders
         run: |
           rm -rf "_site${{ steps.pages.outputs.base_path }}/.git"
           rm -rf "_site${{ steps.pages.outputs.base_path }}/.well-known"
