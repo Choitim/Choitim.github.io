@@ -9,13 +9,16 @@ on:
       - README.md
       - LICENSE
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: pages
   cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,6 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Verify Repository Contents
         run: |
           echo "Listing repository root:"
@@ -35,25 +39,31 @@ jobs:
           if [ ! -f _config.yml ]; then
             echo "Warning: _config.yml not found, may cause Jekyll errors!"
           fi
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.2
           bundler-cache: true
+
       - name: Install Dependencies
         run: bundle install
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
+
       - name: Build Site
         run: bundle exec jekyll build -d "_site${{ steps.pages.outputs.base_path }}"
         env:
           JEKYLL_ENV: production
+
       - name: Test Site
         run: |
           bundle exec htmlproofer _site \
-            --disable-external=true \
+            --disable-external \
             --ignore-urls "/^http:\/\/127.0.0.1/,/^http:\/\/0.0.0.0/,/^http:\/\/localhost/"
+
       - name: Inspect and Clean Site Folder
         run: |
           echo "Checking _site existence:"
@@ -75,10 +85,12 @@ jobs:
           du -sh _site
           echo "Listing remaining files:"
           ls -lR _site
+
       - name: Upload Site Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: "_site${{ steps.pages.outputs.base_path }}"
+
   deploy:
     environment:
       name: github-pages
